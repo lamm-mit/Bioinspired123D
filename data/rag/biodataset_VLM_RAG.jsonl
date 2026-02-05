@@ -1,0 +1,12 @@
+{"category": "helical", "subcategory": "plain", "caption": "helical structure", "path": "/RAG/renders/helical_plain.png"}
+{"category": "helical", "subcategory": "rectangular fibers", "caption": "helical structure made of rectangular fibers", "path": "/RAG/renders/helical_rectangular_fibers.png"}
+{"category": "helical", "subcategory": "cylindrical fibers", "caption": "helical structure made of cylindrical fibers", "path": "/RAG/renders/helical_cylindrical_fibers.png"}
+{"category": "helical", "subcategory": "noise", "caption": "helical structure with noise in rotation", "path": "/RAG/renders/helical_noise.png"}
+{"category": "cellular", "subcategory": "wireframe", "caption": "cellular structure", "path": "/RAG/renders/cellular_wireframe.png"}
+{"category": "cellular", "subcategory": "smoothed", "caption": "cellular structure with smoothed edges","path": "/RAG/renders/cellular_smoothed.png"}
+{"category": "cellular", "subcategory": "sandwich", "caption": "sandwiched cellular structure", "path": "/RAG/renders/cellular_sandwich.png"}
+{"category": "cellular", "subcategory": "smoothed sandwich", "caption": "sandwiched cellular structure with smoothed edges", "path": "/RAG/renders/cellular_smoothed_sandwich.png"}
+{"category": "tubular", "subcategory": "plain", "caption": "tubular structure", "path": "/RAG/renders/tubular_plain.png"}
+{"category": "tubular", "subcategory": "shapesize", "caption": "tubular structure with varying shape and size", "path": "/RAG/renders/tubular_shapesize.png"}
+{"category": "tubular", "subcategory": "layers", "caption": "tubular structure with cortical layers", "path": "/RAG/renders/tubular_layers.png"}
+{"category": "tubular", "subcategory": "noise", "caption": "tubular structure with noisy placement", "path": "/RAG/renders/tubular_noise.png"}

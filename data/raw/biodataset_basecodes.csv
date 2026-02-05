@@ -1,0 +1,893 @@
+﻿Category,Subcategory,ID,Descript,Code,Parameters
+helical,generic,helical_generic,stacked helical plate structure,"import bpy
+import math
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters for helical structure
+num_plies = {num_plies} # number of plies/layers in the structure
+rotation_per_ply = {rotation} # rotation angle in degrees applied to each successive ply
+
+def create_plate(index):
+    # Creates a single plate for the helical structure.
+    # Process:
+    # 1. Creates ply at the correct height.
+    # 2. Scales it into a thin plate.
+    # 3. Rotates it around the Z-axis using bpy.ops.transform.rotate().
+    
+    final_height = 2  # Total height of the complete structure         
+    plate_size = 2  # Side length of each square plate
+    ply_thickness = final_height / num_plies  # Compute thickness of each ply
+
+    # Calculate vertical position of the ply 
+    z_height = index * ply_thickness
+
+    # Create cube at the calculated position
+    bpy.ops.mesh.primitive_cube_add(
+        size=plate_size,
+        location=(0, 0, z_height)
+    )
+
+    # Get reference to the created object
+    plate = bpy.context.object
+
+    # Scale cube in Z-direction to create a thin plate
+    plate.scale[2] = ply_thickness / 2
+
+    # Make sure the plate is active and selected
+    bpy.context.view_layer.objects.active = plate
+    plate.select_set(True)
+
+    # Apply rotation around the Z-axis
+    bpy.ops.transform.rotate(
+        value=math.radians(index * rotation_per_ply),
+        orient_axis='Z'
+    )
+
+    return plate
+
+# Generate helical structure by iterating through the number of plies
+for i in range(num_plies):
+    create_plate(i)",Replace {num_plies} and {rotation} with specific values of your choice. Choose num_plies from 5-15 plies (whole numbers only) and rotation_per_ply from 3-20 degrees. Use only one pair per variant. The resulting geometry must reflect the values you chose.
+helical,rectfibers,helical_rectfibers,stacked helical structure made of rectangular fibers,"import bpy
+import math
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters for helical structure made of fibers
+num_plies = {num_plies} # Number of plies/layers in the structure
+rotation_per_ply = {rotation} # Rotation angle in degrees applied to each successive ply
+fiber_shape = ""rect"" # Shape of fibers (currently rectangular)
+
+# Define overall structure dimensions
+final_height = 2 # Total height of the complete structure         
+plate_size = 2 # Width and length of each square plate
+ply_thickness = final_height / num_plies  # Compute thickness of each ply
+fiber_gap = 0.01 # Small gap between fibers
+
+def add_fiber(fiber_shape, fiber_diameter, x, y, z, ply_thickness):
+    if fiber_shape == ""rect"":
+        bpy.ops.mesh.primitive_cube_add(
+            size=1.0,
+            location=(x, y, z),
+            rotation=(0, math.radians(90), 0)
+        )
+        rect = bpy.context.object
+        rect.dimensions = (ply_thickness, fiber_diameter, plate_size)
+        return rect
+
+def create_plate(index):
+    # Creates a helical structure where each ply is made of fibers.
+
+    z_height = index * ply_thickness
+    base_rotation = index * rotation_per_ply
+
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, z_height))
+    plate_empty = bpy.context.object
+
+    fiber_diameter = ply_thickness
+    fiber_spacing = fiber_diameter + fiber_gap
+    num_fibers = max(1, int(plate_size / fiber_spacing))
+
+    total_space = num_fibers * fiber_spacing
+    start_y = -plate_size / 2 + fiber_spacing / 2 + (plate_size - total_space) / 2
+
+    for i in range(num_fibers):
+        fiber_center_y = start_y + i * fiber_spacing
+        fiber_obj = add_fiber(
+            fiber_shape=fiber_shape,
+            fiber_diameter=fiber_diameter,
+            x=0,
+            y=fiber_center_y,
+            z=z_height,
+            ply_thickness=ply_thickness
+        )
+        fiber_obj.parent = plate_empty
+        fiber_obj.matrix_parent_inverse = plate_empty.matrix_world.inverted()
+
+    plate_empty.rotation_euler[2] = math.radians(base_rotation)
+    return plate_empty
+
+# Create the structure
+for i in range(num_plies):
+    create_plate(i)",Replace {num_plies} and {rotation} with specific values of your choice. Choose num_plies from 5-15 plies (whole numbers only) and rotation_per_ply from 3-20 degrees. Use only one pair per variant. The resulting geometry must reflect the values you chose.
+helical,cylinfibers,helical_cylinfibers,stacked helical structure made of cylindrical fibers,"import bpy
+import math
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters for helical structure made of fibers
+num_plies = {num_plies} # Number of plies/layers in the structure
+rotation_per_ply = {rotation} # Rotation angle in degrees applied to each successive ply
+fiber_shape = ""cylinder"" # Shape of fibers (currently cylinder)
+
+# Define overall structure dimensions
+final_height = 2 # Total height of the complete structure         
+plate_size = 2 # Width and length of each square plate
+ply_thickness = final_height / num_plies # Compute thickness of each ply
+
+def add_fiber(fiber_shape, fiber_diameter, x, y, z, ply_thickness):
+    if fiber_shape == ""cylinder"":
+        bpy.ops.mesh.primitive_cylinder_add(
+            radius = fiber_diameter / 2,
+            depth  = plate_size,
+            location = (x, y, z),
+            rotation = (0, math.radians(90), 0)
+        )
+        return bpy.context.object
+
+def create_plate(index):
+    # Creates a helical structure where each ply is made of fibers.
+
+    z_height = index * ply_thickness
+    base_rotation = index * rotation_per_ply
+
+    # Create an empty object to group fibers
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, z_height))
+    plate_empty = bpy.context.object
+
+    fiber_diameter = ply_thickness
+    num_fibers = max(1, int(plate_size / fiber_diameter))
+
+    total_fiber_space = num_fibers * fiber_diameter
+    leftover_space = plate_size - total_fiber_space
+    start_y = -plate_size / 2 + (fiber_diameter / 2) + (leftover_space / 2)
+
+    for i in range(num_fibers):
+        fiber_center_y = start_y + i * fiber_diameter
+        fiber_obj = add_fiber(
+            fiber_shape=fiber_shape,
+            fiber_diameter=fiber_diameter,
+            x=0,
+            y=fiber_center_y,
+            z=z_height,
+            ply_thickness=ply_thickness
+        )
+        fiber_obj.parent = plate_empty
+        fiber_obj.location = (0, fiber_center_y, 0)
+
+    # Select and activate the plate_empty before applying rotation
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.objects.active = plate_empty
+    plate_empty.select_set(True)
+
+    bpy.ops.transform.rotate(
+        value=math.radians(base_rotation),
+        orient_axis='Z'
+    )
+
+    return plate_empty
+
+# Generate the structure
+for i in range(num_plies):
+    create_plate(i)",Replace {num_plies} and {rotation} with specific values of your choice. Choose num_plies from 5-15 plies (whole numbers only) and rotation_per_ply from 3-20 degrees. Use only one pair per variant. The resulting geometry must reflect the values you chose.
+helical,noise,helical_noise,stacked helical plate structure with induced noise in rotation,"import bpy
+import math
+import random
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters for helical structure
+num_plies = {num_plies} # Number of plies/layers in the structure
+rotation_per_ply = {rotation} # Rotation angle in degrees applied to each successive ply
+
+# Noise parameters for introducing randomness in rotation
+use_noise = True # Enable or disable noise in rotation
+noise_strength = {noise} # Maximum deviation (in degrees) from the base rotation
+
+def create_plate(index):
+    # Creates a helical structure with noise.
+
+    final_height = 2
+    plate_size = 2
+    ply_thickness = final_height / num_plies
+    z_height = index * ply_thickness
+
+    # Create cube at position
+    bpy.ops.mesh.primitive_cube_add(
+        size=plate_size,
+        location=(0, 0, z_height)
+    )
+
+    plate = bpy.context.object
+    plate.scale[2] = ply_thickness / 2
+
+    # Compute base rotation + noise
+    base_rotation = index * rotation_per_ply
+    if use_noise:
+        base_rotation += random.uniform(-noise_strength, noise_strength)
+
+    # Select and activate plate before rotating
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.objects.active = plate
+    plate.select_set(True)
+
+    # Rotate around Z-axis
+    bpy.ops.transform.rotate(
+        value=math.radians(base_rotation),
+        orient_axis='Z'
+    )
+    return plate
+
+# Create structure
+for i in range(num_plies):
+    create_plate(i)","Replace {num_plies}, {rotation}, and {noise} with specific values of your choice. Choose num_plies from 5-15 plies (whole numbers only), rotation_per_ply from 3-20 degrees, and noise from 3-10. Use only one set of parameters per variant. The resulting geometry must reflect the values you chose."
+cellular,generic,cellular_generic,cellular structure,"import bpy
+import addon_utils
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters of the cellular structure
+thickness = {thickness} # Thickness of the struts 
+
+def create_wire_model():
+    # Creates a cellular structure. 
+    # Process:
+    # 1. Creates a cube. 
+    # 2. Factures the cube, merges pieces. 
+    # 3. Apply wireframe modifier to create cellular structure. 
+
+    # Enable Fracture Cell add-on
+    addon_utils.enable(""object_fracture_cell"")
+
+    # Create a cube as a starting object
+    bpy.ops.mesh.primitive_cube_add(size=2)
+    cube = bpy.context.object
+    
+    # Apply the Fracture Cell operation to break the cube into smaller fragments
+    bpy.ops.object.add_fracture_cell_objects(
+        source={{'PARTICLE_OWN'}},
+        source_limit=100,  
+        source_noise=0.5,  
+        cell_scale=(1, 1, 1),  
+        recursion=0, 
+        recursion_source_limit=8,
+        recursion_clamp=250,
+        recursion_chance=0.25,
+        recursion_chance_select='SIZE_MIN',
+        use_smooth_faces=False,  
+        use_sharp_edges=True, 
+        use_sharp_edges_apply=True,
+        use_data_match=True,
+        use_island_split=True,
+        margin=0.001,  
+        material_index=0,
+        use_interior_vgroup=False,
+        mass_mode='VOLUME',
+        mass=1,
+        use_recenter=True,  
+        use_remove_original=True,  
+        collection_name="""",
+        use_debug_points=False,
+        use_debug_redraw=True,
+        use_debug_bool=False
+    )
+    # Ensure the original cube is removed after fracturing
+    if cube and cube.name in bpy.data.objects:
+        bpy.data.objects.remove(cube, do_unlink=True)
+    
+    # Join fractured pieces into one object
+    bpy.ops.object.select_all(action='DESELECT')
+    first_obj = None
+    for obj in bpy.context.scene.objects:
+        if obj.type == 'MESH':
+            obj.select_set(True)
+            if first_obj is None:
+                first_obj = obj        
+    if first_obj:
+        bpy.context.view_layer.objects.active = first_obj
+        bpy.ops.object.join()
+    
+    if bpy.context.selected_objects and bpy.context.view_layer.objects.active and bpy.context.view_layer.objects.active.type == 'MESH':
+        active_obj = bpy.context.view_layer.objects.active
+        # Clean up geometry 
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles(threshold=0.2)  
+        bpy.ops.mesh.dissolve_limited()
+        bpy.ops.mesh.dissolve_limited(angle_limit=1)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        
+        # Apply Wireframe Modifier to create cellular structure
+        wireframe_modifier = active_obj.modifiers.new(name='Wireframe', type='WIREFRAME')
+        wireframe_modifier.thickness = thickness 
+        wireframe_modifier.offset = -1 
+        wireframe_modifier.use_even_offset = False
+        wireframe_modifier.use_relative_offset = True
+        wireframe_modifier.use_replace = True 
+
+
+# Generate cellular structure
+create_wire_model()",Replace {thickness} with specific values of your choice. Choose thickness from 0.1 to 0.3. Use only one set of parameters per variant. The resulting geometry must reflect the values you chose.
+cellular,voronoi,cellular_voronoi,cellular structure with smoothed edges,"import bpy
+import addon_utils
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters of the cellular structure
+thickness = {thickness} # Thickness of the struts
+smoothlevel = {smoothlevel} # Level of smoothness
+
+def create_smooth_model():
+    # Creates a smoothed cellular structure. 
+    # Process:
+    # 1. Creates a cube. 
+    # 2. Factures the cube, merges pieces. 
+    # 3. Apply wireframe modifier to create cellular structure. 
+    # 4. Apply subsurface modifier to smooth the edges. 
+
+    # Enable Fracture Cell add-on
+    addon_utils.enable(""object_fracture_cell"")
+
+    # Create a cube as a starting object
+    bpy.ops.mesh.primitive_cube_add(size=2)
+    cube = bpy.context.object
+    
+    # Apply the Fracture Cell operation to break the cube into smaller fragments
+    bpy.ops.object.add_fracture_cell_objects(
+        source={{'PARTICLE_OWN'}},
+        source_limit=100,
+        source_noise=0.5,
+        cell_scale=(1, 1, 1),
+        recursion=0,
+        recursion_source_limit=8,
+        recursion_clamp=250,
+        recursion_chance=0.25,
+        recursion_chance_select='SIZE_MIN',
+        use_smooth_faces=False,
+        use_sharp_edges=True,
+        use_sharp_edges_apply=True,
+        use_data_match=True,
+        use_island_split=True,
+        margin=0.001,
+        material_index=0,
+        use_interior_vgroup=False,
+        mass_mode='VOLUME',
+        mass=1,
+        use_recenter=True,
+        use_remove_original=True,
+        collection_name="""",
+        use_debug_points=False,
+        use_debug_redraw=True,
+        use_debug_bool=False
+    )
+
+    # Ensure the original cube is removed after fracturing
+    if cube and cube.name in bpy.data.objects:
+        bpy.data.objects.remove(cube, do_unlink=True)
+    
+    # Join fractured pieces into one object
+    bpy.ops.object.select_all(action='DESELECT')
+    first_obj = None
+    for obj in bpy.context.scene.objects:
+        if obj.type == 'MESH':
+            obj.select_set(True)
+            if first_obj is None:
+                first_obj = obj
+    if first_obj:
+        bpy.context.view_layer.objects.active = first_obj
+        bpy.ops.object.join()
+    
+    if bpy.context.selected_objects and bpy.context.view_layer.objects.active and bpy.context.view_layer.objects.active.type == 'MESH':
+        active_obj = bpy.context.view_layer.objects.active
+        # Clean up geometry
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles(threshold=0.2) 
+        bpy.ops.mesh.dissolve_limited()
+        bpy.ops.mesh.dissolve_limited(angle_limit=1)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Apply Wireframe Modifier to create cellular structure
+        wireframe_modifier = active_obj.modifiers.new(name='Wireframe', type='WIREFRAME')
+        wireframe_modifier.thickness = thickness
+        wireframe_modifier.offset = -1 
+        wireframe_modifier.use_even_offset = False
+        wireframe_modifier.use_relative_offset = True
+        wireframe_modifier.use_replace = True
+
+        # Apply Subsurface Modifier to smooth the edges
+        subsurf_modifier = active_obj.modifiers.new(name='Subdivision', type='SUBSURF')
+        subsurf_modifier.levels = smoothlevel
+        subsurf_modifier.render_levels = smoothlevel
+
+# Generate smooth cellular structure
+create_smooth_model()",Replace {thickness} and {smoothlevel} with specific values of your choice. Choose thickness from 0.1-0.3 and smoothlevel from 1-6 (whole numbers only). Use only one pair per variant. The resulting geometry must reflect the values you chose.
+cellular,sandwich,cellular_sandwich,sandwiched cellular structure,"import bpy
+import addon_utils 
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters of the cellular sandwich structure
+thickness = {thickness} # Thickness of the struts
+sandwich_size = {size} # Thickness of the top and bottom sandwich slabs 
+
+def create_wire_sand():
+    # Creates a cellular sandwich structure. 
+    # Process:
+    # 1. Creates a rectangular prism. 
+    # 2. Factures the prism, merges pieces. 
+    # 3. Apply wireframe modifier to create cellular structure. 
+    # 4. Adding top and bottom slabs to form sandwich structure. 
+
+    # Enable Fracture Cell add-on
+    addon_utils.enable(""object_fracture_cell"")
+
+    # Create a cube as a starting object
+    bpy.ops.mesh.primitive_cube_add()
+    obj = bpy.context.active_object
+
+    # Scale down the cube to fit the sandwich slabs
+    obj.scale = (1, 1, 0.75)
+    bpy.ops.object.transform_apply(scale=True)
+    cube = bpy.context.object
+
+    # Apply the Fracture Cell operation to break the cube into smaller fragments
+    bpy.ops.object.add_fracture_cell_objects(
+        source={{'PARTICLE_OWN'}},
+        source_limit=100, 
+        source_noise=0.5, 
+        cell_scale=(1, 1, 1), 
+        recursion=0, 
+        recursion_source_limit=8, 
+        recursion_clamp=250, 
+        recursion_chance=0.25, 
+        recursion_chance_select='SIZE_MIN', 
+        use_smooth_faces=False, 
+        use_sharp_edges=True, 
+        use_sharp_edges_apply=True, 
+        use_data_match=True, 
+        use_island_split=True, 
+        margin=0.001, 
+        material_index=0, 
+        use_interior_vgroup=False, 
+        mass_mode='VOLUME', 
+        mass=1, 
+        use_recenter=True, 
+        use_remove_original=True, 
+        collection_name="""", 
+        use_debug_points=False, 
+        use_debug_redraw=True, 
+        use_debug_bool=False
+    )
+
+    # Ensure the original cube is removed after fracturing
+    if cube and cube.name in bpy.data.objects:
+        bpy.data.objects.remove(cube, do_unlink=True)
+
+    # Join fractured pieces into one object
+    bpy.ops.object.select_all(action='DESELECT')
+    first_obj = None
+    for obj in bpy.context.scene.objects:
+        if obj.type == 'MESH':
+            obj.select_set(True)
+            if first_obj is None:
+                first_obj = obj
+    if first_obj:
+        bpy.context.view_layer.objects.active = first_obj
+        bpy.ops.object.join()
+        
+    if bpy.context.selected_objects and bpy.context.view_layer.objects.active and bpy.context.view_layer.objects.active.type == 'MESH':
+        active_obj = bpy.context.view_layer.objects.active
+        # Clean up geometry
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles(threshold=0.2)
+        bpy.ops.mesh.dissolve_limited()
+        bpy.ops.mesh.dissolve_limited(angle_limit=1)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Apply Wireframe Modifier to create cellular structure
+        wireframe_modifier = active_obj.modifiers.new(name='Wireframe', type='WIREFRAME')
+        wireframe_modifier.thickness = thickness 
+        wireframe_modifier.offset=-1  
+        wireframe_modifier.use_even_offset = False
+        wireframe_modifier.use_relative_offset = True
+        wireframe_modifier.use_replace = True  
+        bpy.ops.object.convert(target='MESH')
+    
+    # Define height for sandwich slabs
+    wireframe_height = 1.5 # Approximate height of the object to be sandwiched
+    bottom_slab_z = -wireframe_height / 2 - sandwich_size / 2 # Position of the bottom slab
+    top_slab_z = wireframe_height / 2 + sandwich_size / 2 # Position of the top slab
+
+    # Create bottom slab
+    bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, bottom_slab_z))
+    bottom_slab = bpy.context.active_object
+    bottom_slab.scale = (1, 1, sandwich_size/2)
+    bpy.ops.object.transform_apply(scale=True)
+
+    # Create top slab
+    bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, top_slab_z))
+    top_slab = bpy.context.active_object
+    top_slab.scale = (1, 1, sandwich_size/2)
+    bpy.ops.object.transform_apply(scale=True)
+
+# Generate cellular structure with sandwich slabs 
+create_wire_sand()",Replace {thickness} and {size} with specific values of your choice. Choose thickness from 0.1-0.3 and size from 0.05-0.4 Use only one pair per variant. The resulting geometry must reflect the values you chose.
+cellular,vorosand,cellular_vorosand,sandwiched cellular structure with smooth edges,"import bpy
+import addon_utils 
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters of the cellular sandwich structure
+thickness = {thickness} # Thickness of the struts
+smoothlevel = {smoothlevel} # Level of smoothness 
+sandwich_size = {size} # Thickness of the top and bottom sandwich slabs
+
+def create_smooth_sand():
+    # Creates a smooth cellular sandwich structure. 
+    # Process:
+    # 1. Creates a rectangular prism. 
+    # 2. Factures the prism, merges pieces. 
+    # 3. Apply wireframe modifier to create cellular structure. 
+    # 4. Apply subsurface modifier to smooth the edges. 
+    # 5. Adding top and bottom slabs to form sandwich structure. 
+    
+    # Enable Fracture Cell add-on
+    addon_utils.enable(""object_fracture_cell"")
+
+    # Create a cube as a starting object
+    bpy.ops.mesh.primitive_cube_add()
+    obj = bpy.context.active_object
+
+    # Scale down the cube to fit the sandwich slabs
+    obj.scale = (1, 1, 0.75)
+    bpy.ops.object.transform_apply(scale=True)
+    cube = bpy.context.object
+
+    # Apply the Fracture Cell operation to break the cube into smaller fragments
+    bpy.ops.object.add_fracture_cell_objects(
+        source={{'PARTICLE_OWN'}},
+        source_limit=100, 
+        source_noise=0.5, 
+        cell_scale=(1, 1, 1), 
+        recursion=0, 
+        recursion_source_limit=8, 
+        recursion_clamp=250, 
+        recursion_chance=0.25, 
+        recursion_chance_select='SIZE_MIN', 
+        use_smooth_faces=False, 
+        use_sharp_edges=True, 
+        use_sharp_edges_apply=True, 
+        use_data_match=True, 
+        use_island_split=True, 
+        margin=0.001, 
+        material_index=0, 
+        use_interior_vgroup=False, 
+        mass_mode='VOLUME', 
+        mass=1, 
+        use_recenter=True, 
+        use_remove_original=True, 
+        collection_name="""", 
+        use_debug_points=False, 
+        use_debug_redraw=True, 
+        use_debug_bool=False
+    )
+
+    # Ensure the original cube is removed after fracturing
+    if cube and cube.name in bpy.data.objects:
+        bpy.data.objects.remove(cube, do_unlink=True)
+
+    # Join fractured pieces into one object
+    bpy.ops.object.select_all(action='DESELECT')
+    first_obj = None
+    for obj in bpy.context.scene.objects:
+        if obj.type == 'MESH':
+            obj.select_set(True)
+            if first_obj is None:
+                first_obj = obj
+    if first_obj:
+        bpy.context.view_layer.objects.active = first_obj
+        bpy.ops.object.join()
+        
+    if bpy.context.selected_objects and bpy.context.view_layer.objects.active and bpy.context.view_layer.objects.active.type == 'MESH':
+        active_obj = bpy.context.view_layer.objects.active
+        # Clean up geometry
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles(threshold=0.2)
+        bpy.ops.mesh.dissolve_limited()
+        bpy.ops.mesh.dissolve_limited(angle_limit=1)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Apply Wireframe Modifier to create cellular structure
+        wireframe_modifier = active_obj.modifiers.new(name='Wireframe', type='WIREFRAME')
+        wireframe_modifier.thickness = thickness 
+        wireframe_modifier.offset=-1  
+        wireframe_modifier.use_even_offset = False
+        wireframe_modifier.use_relative_offset = True
+        wireframe_modifier.use_replace = True  
+        bpy.ops.object.convert(target='MESH')
+        
+        # Apply Subsurface Modifier to smooth the edges
+        subsurf_modifier = active_obj.modifiers.new(name='Subdivision', type='SUBSURF')
+        subsurf_modifier.levels = smoothlevel
+        subsurf_modifier.render_levels = smoothlevel
+
+    
+    # Define height for sandwich slabs
+    wireframe_height = 1.5 # Approximate height of the object to be sandwiched
+    bottom_slab_z = -wireframe_height / 2 - sandwich_size / 2 # Position of the bottom slab
+    top_slab_z = wireframe_height / 2 + sandwich_size / 2 # Position of the top slab
+
+    # Create bottom slab
+    bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, bottom_slab_z))
+    bottom_slab = bpy.context.active_object
+    bottom_slab.scale = (1, 1, sandwich_size/2)
+    bpy.ops.object.transform_apply(scale=True)
+
+    # Create top slab
+    bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, top_slab_z))
+    top_slab = bpy.context.active_object
+    top_slab.scale = (1, 1, sandwich_size/2)
+    bpy.ops.object.transform_apply(scale=True)
+
+# Generate smooth cellular structure with sandwich slabs 
+create_smooth_sand()","Replace {thickness},  {smoothlevel}, and {size} with specific values of your choice. Choose thickness from 0.1-0.3, smoothlevel from 1-6 (whole numbers only), and size from 0.05-0.4. Use only one set of parameters per variant. The resulting geometry must reflect the values you chose."
+tubular,generic,tubular_generic,cube with grid of tubule holes,"import bpy
+import math
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters of the tubular structure
+tubule_count = {num_tubules} # Total number of tubules in the structure
+
+def create_tubules():
+    # Creates a cube with a grid of tubules.
+    # Process:
+    # 1. Creates a cube.
+    # 2. Arranges tubules in a grid pattern.
+    # 3. Uses Boolean modifiers to subtract tubules.
+    
+    # Create a cube as a starting object
+    bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, 0))
+    cube = bpy.context.object
+    
+    # Calculate grid arrangement for tubules
+    grid_size = math.ceil(math.sqrt(tubule_count))
+    spacing = 2 / grid_size
+    start_offset = -1 + spacing / 2
+    
+    # Generate positions for tubules within the grid
+    positions = [(start_offset + (i % grid_size) * spacing, 
+                  start_offset + (i // grid_size) * spacing) 
+                 for i in range(tubule_count)]
+    
+    # Iterate through positions and subtract cylinders from the cube
+    for x, y in positions:
+        # Create a cylinder (tubule) at the computed position
+        bpy.ops.mesh.primitive_cylinder_add(radius=0.1, depth=3, location=(x, y, 0))
+        tubule = bpy.context.object
+
+        # Creates Boolean modifier to subtract the tubule from the cube
+        modifier = cube.modifiers.new(name=f""Boolean_{{x}}_{{y}}"", type='BOOLEAN')
+        modifier.operation = 'DIFFERENCE'
+        modifier.object = tubule
+
+        # Applies Boolean modifier to perform the subtraction 
+        bpy.context.view_layer.objects.active = cube
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+
+        # Remove the cylinder after subtraction
+        bpy.data.objects.remove(tubule, do_unlink=True)
+
+# Generate tubular structure
+create_tubules(tubule_count)",Replace {num_tubules} with specific value of your choice. Choose num_tubules from 9-25 (whole numbers only). Use only one set of parameters per variant. The resulting geometry must reflect the values you chose.
+tubular,shapesize,tubular_shapesize,cube with grid of tubule holes of varying shape and size,"import bpy
+import math
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters of the tubular structure
+tubule_count = {num_tubules} # Total number of tubules in the structure
+ellipticity = {ellipticity} # Factor to stretch tubules into ellipses 
+tubule_radius = {radius} # Base radius of the tubules
+
+def create_tubule_cube(tubule_count, ellipticity=1.0, tubule_radius=0.1):
+    # Creates a cube with a grid of tubules of specified size and shape.
+    # Process:
+    # 1. Creates a cube.
+    # 2. Arranges tubules in a grid pattern.
+    # 3. Uses Boolean modifiers to subtract tubules after applying shape and size modifiers.
+    
+    # Create a cube as a starting object
+    bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, 0))
+    cube = bpy.context.object
+    
+    # Calculate grid arrangement for tubules
+    grid_size = math.ceil(math.sqrt(tubule_count))
+    spacing = 2 / grid_size
+    start_offset = -1 + spacing / 2
+    
+    # Generate positions for tubules within the grid
+    positions = [(start_offset + (i % grid_size) * spacing, 
+                  start_offset + (i // grid_size) * spacing) 
+                 for i in range(tubule_count)]
+    
+    # Iterate through positions and subtract cylinders from the cube
+    for x, y in positions:
+        # Create a cylinder (tubule) at the computed position
+        bpy.ops.mesh.primitive_cylinder_add(radius=tubule_radius, depth=3, location=(x, y, 0))
+        tubule = bpy.context.object
+        tubule.scale[0] *= ellipticity # Applies ellipticity factor
+
+        # Creates Boolean modifier to subtract the tubule from the cube
+        modifier = cube.modifiers.new(name=f""Boolean_{{x}}_{{y}}"", type='BOOLEAN')
+        modifier.operation = 'DIFFERENCE'
+        modifier.object = tubule
+
+        # Applies Boolean modifier to perform the subtraction 
+        bpy.context.view_layer.objects.active = cube
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+        
+        # Remove the cylinder after subtraction
+        bpy.data.objects.remove(tubule, do_unlink=True)
+
+# Generate tubular structure
+create_tubule_cube(tubule_count, ellipticity, tubule_radius)","Replace {num_tubules}, {ellipticity}, and {radius} with specific values of your choice. Choose num_tubules from 9-25 (whole numbers only), ellipticity from 1-2, radius from 0.05-0.1. Use only one set of parameters per variant. The resulting geometry must reflect the values you chose."
+tubular,layers,tubular_layers,"cube with grid of tubule holes, each hole with a cortical layer","import bpy
+import math
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters of the tubular structure
+tubule_count = {num_tubules} # Total number of tubules in the structure
+layer_thickness = {thickness} # Thickness of layer surrounding each tubule
+
+def create_tubules():
+    # Creates a cube with a grid of tubules each surrounded by a layer.
+    # Process:
+    # 1. Creates a cube.
+    # 2. Arranges tubules in a grid pattern.
+    # 3. Create and inner and outer tubule for each position. 
+    # 4. Uses Boolean modifiers to subtract inner tubules from the cube.
+    # 5. Uses Boolean modifiers to subtract inner tubule from outer tubule to create a layer. 
+
+    # Create a cube as a starting object
+    bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, 0))
+    cube = bpy.context.object
+    
+    # Calculate grid arrangement for tubules
+    grid_size = math.ceil(math.sqrt(tubule_count))
+    spacing = 2 / grid_size
+    start_offset = -1 + spacing / 2
+    
+    # Generate positions for tubules within the grid
+    positions = [(start_offset + (i % grid_size) * spacing, 
+                  start_offset + (i // grid_size) * spacing) 
+                 for i in range(tubule_count)]
+    
+    # List to store layers for merging
+    layer_objs = []
+    
+    # Iterate through positions and subtract cylinders from the cube
+    for x, y in positions:
+        # Create a cylinder (tubule) at the computed position
+        bpy.ops.mesh.primitive_cylinder_add(radius=0.1, depth=2, location=(x, y, 0))
+        inner_tubule = bpy.context.object
+
+        # Creates a layer at the same position
+        bpy.ops.mesh.primitive_cylinder_add(radius=0.1 - layer_thickness, depth=2, location=(x, y, 0))
+        outer_tubule = bpy.context.object
+        
+        # Apply Boolean subtraction to remove the inner tubule from the cube
+        modifier = cube.modifiers.new(name=f""Boolean_{{x}}_{{y}}"", type='BOOLEAN')
+        modifier.operation = 'DIFFERENCE'
+        modifier.object = inner_tubule
+        bpy.context.view_layer.objects.active = cube
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+        
+        # Apply Boolean subtraction to create the hollow shell around the tubule
+        bool_mod_layer = inner_tubule.modifiers.new(name=f""Bool_Layer_{{x}}_{{y}}"", type='BOOLEAN')
+        bool_mod_layer.operation = 'DIFFERENCE'
+        bool_mod_layer.object = outer_tubule
+        bpy.context.view_layer.objects.active = inner_tubule
+        bpy.ops.object.modifier_apply(modifier=bool_mod_layer.name)
+
+        # Remove the outer tubule object after subtraction
+        bpy.data.objects.remove(outer_tubule, do_unlink=True)
+
+        # Store the processed shell object for merging
+        layer_objs.append(inner_tubule)
+        
+    # Merge all layers into a single object
+    if layer_objs:
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj in layer_objs:
+            obj.select_set(True)
+        bpy.context.view_layer.objects.active = layer_objs[0]
+        bpy.ops.object.join()
+        layer_shell = bpy.context.object
+        layer_shell.name = ""Layer_Shell""
+
+# Generate tubular structure with layers
+create_tubules()",Replace {num_tubules} and {thickness} with specific values of your choice. Choose num_tubules from 9-25 (whole numbers only) and thickness from 0.02-0.08. Use only one pair per variant. The resulting geometry must reflect the values you chose.
+tubular,noise,tubular_noise,"cube with grid of tubule holes, placement scattered by noise","import bpy
+import math
+import random
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters of the tubular structure
+tubule_count = {num_tubules} # Total number of tubules in the structure
+noise = {noise} # Maximum noise deviation applied to tubule positions
+
+def create_tubules(tubule_count=16, noise=2.0):
+    # Creates a cube with a grid of tubules with jittered noise placement.
+    # Process:
+    # 1. Creates a cube.
+    # 2. Arranges tubules in a grid pattern.
+    # 3. Applies noise to jitter positions.
+    # 4. Uses Boolean modifiers to subtract tubules.
+    
+    # Create a cube as a starting object
+    bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, 0))
+    cube = bpy.context.object
+    
+    # Calculate grid arrangement for tubules
+    grid_size = math.ceil(math.sqrt(tubule_count))
+    spacing = 2 / grid_size
+    start_offset = -1 + spacing / 2
+    
+    # Generate initial positions for tubules within the grid
+    positions = [(start_offset + (i % grid_size) * spacing, 
+                  start_offset + (i // grid_size) * spacing) 
+                 for i in range(tubule_count)]
+    
+    # Apply random noise to each position
+    noisy_positions = [(x + random.uniform(-noise, noise), 
+                        y + random.uniform(-noise, noise)) for x, y in positions]
+    
+    # Iterate through positions and subtract cylinders from the cube                    
+    for x, y in noisy_positions:
+        # Create a cylinder (tubule) at the computed position
+        bpy.ops.mesh.primitive_cylinder_add(radius=0.1, depth=3, location=(x, y, 0))
+        tubule = bpy.context.object
+
+        # Creates Boolean modifier to subtract the tubule from the cube
+        modifier = cube.modifiers.new(name=f""Boolean_{{x}}_{{y}}"", type='BOOLEAN')
+        modifier.operation = 'DIFFERENCE'
+        modifier.object = tubule
+
+        # Applies Boolean modifier to perform the subtraction 
+        bpy.context.view_layer.objects.active = cube
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+
+        # Remove the cylinder after subtraction
+        bpy.data.objects.remove(tubule, do_unlink=True)
+
+# Generate tubular structure with noise
+create_tubules(tubule_count, noise)",Replace {num_tubules} and {noise} with specific values of your choice. Choose num_tubules from 9-25 (whole numbers only) and noise from 0.05-0.1. Use only one pair per variant. The resulting geometry must reflect the values you chose.

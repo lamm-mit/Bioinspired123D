@@ -1,0 +1,113 @@
+First, import necessary libraries and clear the scene to start fresh.
+```python
+import bpy
+import math
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+```
+
+Next, define the main parameters that control the structure. num_plies controls how many plates the structure will have, and rotation_per_ply determines how much each plate rotates relative to the one below it.
+```python
+num_plies = 10
+rotation_per_ply = 15
+```
+
+Now, define a function that creates one individual plate. This function is responsible for generating a cube, modifying its scale to form a thin plate, placing it at the correct height, and rotating it accordingly.
+```python
+def create_plate(index):
+```
+
+Inside the function, define constants that control the plate geometry. We set the total height of the structure, the size of each square plate, and calculate how thick each ply should be.
+```python
+final_height = 2
+plate_size = 2
+ply_thickness = final_height / num_plies
+```
+
+Then, compute the vertical position for this specific plate. This is determined by multiplying the ply index by the thickness of one ply.
+```python
+z_height = index * ply_thickness
+```
+
+Add a cube to the scene at the specified height. This cube will later be scaled and rotated to form one ply of the structure.
+```python
+bpy.ops.mesh.primitive_cube_add(
+    size=plate_size,
+    location=(0, 0, z_height)
+)
+```
+
+Get a reference to the newly added cube object. This allows us to apply transformations directly.
+```python
+plate = bpy.context.object
+```
+
+Scale the cube to make it a thin plate. We compress it in the Z-direction so that it resembles a flat sheet rather than a cube.
+```python
+plate.scale[2] = ply_thickness / 2
+```
+
+Ensure the plate is selected and active. This is required for the next transformation (rotation) to apply correctly.
+```python
+bpy.context.view_layer.objects.active = plate
+plate.select_set(True)
+```
+
+Rotate the plate around the Z-axis. Each plate is rotated by index * rotation_per_ply, so the rotation accumulates layer by layer, forming a helical shape.
+```python
+bpy.ops.transform.rotate(
+    value=math.radians(index * rotation_per_ply),
+    orient_axis='Z'
+)
+```
+
+Return the plate object. This step isn't strictly necessary unless we want to do something with the object later, but it's good practice.
+```python
+return plate
+```
+
+Finally, generate the full helical structure by calling create_plate for each index. This loop iterates from 0 to num_plies - 1, creating and positioning each layer.
+```python
+for i in range(num_plies):
+    create_plate(i)
+```
+
+Here is the full final script:
+```python
+import bpy
+import math
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Define parameters
+num_plies = 10
+rotation_per_ply = 15
+
+def create_plate(index):
+    final_height = 2
+    plate_size = 2
+    ply_thickness = final_height / num_plies
+
+    z_height = index * ply_thickness
+
+    bpy.ops.mesh.primitive_cube_add(
+        size=plate_size,
+        location=(0, 0, z_height)
+    )
+    plate = bpy.context.object
+    plate.scale[2] = ply_thickness / 2
+
+    bpy.context.view_layer.objects.active = plate
+    plate.select_set(True)
+
+    bpy.ops.transform.rotate(
+        value=math.radians(index * rotation_per_ply),
+        orient_axis='Z'
+    )
+
+    return plate
+
+for i in range(num_plies):
+    create_plate(i)
+```
