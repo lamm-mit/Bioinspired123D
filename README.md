@@ -1,45 +1,55 @@
-# Bioinspired123D 🧬🧱  
+# Bioinspired123D
 **Generative 3D Modeling System for Bioinspired Structures**
 
-Authors: R.K. Luu, M.J. Buehler (2026)
-Corresponding author: mbuehler@mit.edu
+**Authors:** Rachel K. Luu, Markus J. Buehler (2026)  
+**Corresponding author:** mbuehler@mit.edu
+
+---
 
 ## Overview
-This repository contains the code, data interfaces, and notebooks for **Bioinspired123D**, a framework that translates natural-language descriptions of biological structure into executable **Blender Python scripts** that generate 3D bioinspired geometries.
 
-The project explores how lightweight, fine-tuned LLMs can move beyond 1D text outputs to **procedural 3D model generation**, enabling structured exploration of tubular, helical, cellular, and hybrid architectures inspired by biological materials.
+**Bioinspired123D** is a generative framework that translates natural language descriptions of biological structure into executable **Blender Python scripts**, producing procedural 3D bioinspired geometries.
 
-Key ideas:
-- Language → executable geometry
+The system explores how lightweight, fine tuned LLMs can move beyond 1D text generation to structured **3D model synthesis**, enabling exploration of tubular, helical, cellular, and hybrid architectures inspired by biological materials.
+
+Core ideas:
+- Language → executable geometry  
+- Procedural 3D generation via Blender scripting  
 - Multimodal grounding using rendered images and code validation  
 - Agentic and staged inference for robustness and repair  
 - Compact models designed for limited compute settings  
 
-![Overview](images/overview.png)  
-![Example Models](images/examples.png)
+---
 
+<p align="center">
+  <img src="media/cellular.gif" width="30%">
+  <img src="media/tubular.gif" width="30%">
+  <img src="media/helical.gif" width="30%">
+</p>
+
+---
 
 ## Repository Structure
+
 ```text
-├── data/  
-│   ├── bioinspired3d_dataset_final.csv      # Final dataset used to FT Bioinspired3D                    
-│   ├── raw/                                 # Base Blender codes or selected BlendNet dataset
-│   └── rag/                                 # JSONLs and renders used for RAG for LLM and VLM
+├── data/
+│   ├── bioinspired3d_dataset_final.csv   # Final dataset used to fine tune Bioinspired3D
+│   ├── raw/                              # Base Blender codes or selected BlendNet dataset
+│   └── rag/                              # JSONLs and renders used for RAG with LLMs and VLMs
 ├── notebooks/
-│   ├── scripts/                    
-│   ├── 00_dataset_pipeline.ipynb            # Generate Blender code dataset using our pipeline
-│   ├── 01_inf_Bioinspired3D.ipynb           # Inference Bioinspired3D - the finetuned model for Blender code
-│   └── 02_inf_Bioinspired123D.ipynb         # Inference Bioinspired123D - the full agentic system for 3D bioinspired structures
+│   ├── scripts/
+│   ├── 00_dataset_pipeline.ipynb         # Dataset generation and diversification pipeline
+│   ├── 01_inf_Bioinspired3D.ipynb        # Inference using the fine tuned Bioinspired3D model
+│   └── 02_inf_Bioinspired123D.ipynb      # Full agentic system for 3D structure generation
 ├── training/
-│   └── finetune_bio3d.py               
+│   └── finetune_bio3d.py                 # Training script for Bioinspired3D
 ├── eval/
-│   ├── benchmark_eval_wRAG.py  
-│   ├── benchmark_eval.py  
+│   ├── benchmark_eval.py
+│   ├── benchmark_eval_wRAG.py
 │   └── benchmark.csv
 ├── requirements.txt
 └── README.md
 ```
-
 ## Setup
 
 ### 1. Clone the repository
@@ -47,57 +57,60 @@ Key ideas:
 git clone https://github.com/lamm-mit/bioinspired3d.git
 cd bioinspired3d
 ```
-
-### 2. Create and activate a virtual environment and install dependencies
+### 2. Create and activate a virtual environment
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+### 3. Install Blender 
+Blender is required for script execution and render based validation.
+Download Blender 4.2.1 or newer from
+https://www.blender.org/download/
+Install the Cell Fracture extension for cellular structures
+https://extensions.blender.org/add-ons/cell-fracture/
 
-### 3. If running Blender validation, Blender must be installed. 
-Download from: https://www.blender.org/download/, atleast version (4.2.1+). Additionally the fracture cell extension is necessary for cellular model generation. Download from: https://extensions.blender.org/add-ons/cell-fracture/ 
+## Using the Notebooks
+**Recommended order:**
 
-### 4. Using the Notebooks
+### 00_dataset_pipeline.ipynb
+Generates a Blender code dataset from natural language prompts using diversification and embedded reasoning.
 
-Recommended order: 
+### 01_inf_Bioinspired3D.ipynb
+Runs inference with **Bioinspired3D**, the fine tuned LLM that generates Blender Python scripts directly from prompts.
 
-notebooks/00_dataset_pipeline.ipynb
-Generate Blender scripts from natural-language prompts through diversification and embedded reasoning pipeline.
+### 02_inf_Bioinspired123D.ipynb
+Runs the full **Bioinspired123D** agentic system, including retrieval, validation, and repair, using either user prompts or prompts generated by BioinspiredLLM.
 
-notebooks/01_inf_Bioinspired3D.ipynb 
-Inference Bioinspired3D, the final finetuned model using natural language prompts.
+Each notebook is self contained and documented.
 
-notebooks/02_inf_Bioinspired123D.ipynb 
-Inference Bioinspired3D, the full agentic system using natural language prompts or prompts generated by BioinspiredLLM.
-
-Each notebook is self-contained and documented.
 
 ## Training
-
-We release our training code used to finetune Bioinspired3D. You will need to set Hugging Face token. 
+We release the training code used to fine tune **Bioinspired3D**.  
+A Hugging Face token is required.
 ```bash
 python training/finetune_bio3d.py
 ```
 
+
 ## Evaluation
-
-We similarly release our evaluation code used to benchmark Bioinspired3D and Bioinspired123D. You will need to set Hugging Face token. 
-
+We also release evaluation scripts for benchmarking **Bioinspired3D** and **Bioinspired123D**.  
+A Hugging Face token is required.
 ```bash
-python eval/benchmark_eval.py --models (file path to model checkpoints)
+python eval/benchmark_eval.py --models <path_to_model_checkpoints>
 ```
-OR
+With retrieval augmented generation:
 ```bash
-python eval/benchmark_eval_wRAG.py --models (file path to model checkpoints)
+python eval/benchmark_eval_wRAG.py --models <path_to_model_checkpoints>
 ```
 
-## Citation
+## Citation 
 If you use this work, please cite:
 ```bibtex
 @article{luu2026bioinspired123d,
-  title={Bioinspired123D: Generative 3D Modeling System forBioinspired Structures},
+  title={Bioinspired123D: Generative 3D Modeling System for Bioinspired Structures},
   author={Luu, Rachel K. and  Buehler, Markus J.},
   year={2026}
 }
 ```
+
