@@ -19,19 +19,19 @@ Core ideas:
 - Agentic and staged inference for robustness and repair  
 - Compact models designed for limited compute settings  
 
----
+
 <p align="center">
-  <a href="media/cellular.mp4">
+  <a href="media/cellular_inline.mp4">
     <img src="media/cellular_preview.png" width="30%">
   </a>
-  <a href="media/tubular.mp4">
+  <a href="media/tubular_inline.mp4">
     <img src="media/tubular_preview.png" width="30%">
   </a>
-  <a href="media/helical.mp4">
+  <a href="media/helical_inline.mp4">
     <img src="media/helical_preview.png" width="30%">
   </a>
 </p>
----
+
 
 ![Alt Text](media/bioinspired123d_overview.png)
 
