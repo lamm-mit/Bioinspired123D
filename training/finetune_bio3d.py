@@ -79,13 +79,11 @@ class SFTDataset(Dataset):
         }
 
 
- 
 # Model and Tokenizer loading
 model_name ="meta-llama/Llama-3.2-3B-Instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
-
 
 model = AutoModelForCausalLM.from_pretrained(model_name)
 model.config.use_cache = False
@@ -105,11 +103,11 @@ print("Trainable parameters:")
 model.print_trainable_parameters()
 
 # Prepare the dataset
-train_dataset = SFTDataset("bioinspired3d_dataset_final.csv", tokenizer)
+train_dataset = SFTDataset("../data/bioinspired3d_dataset_final.csv", tokenizer)
 
 # Training arguments
 training_args = TrainingArguments(
-    output_dir="./llama_finetuned_blender/",
+    output_dir="./finetuned_bioinspired3D/",
     num_train_epochs=4,
     per_device_train_batch_size=1,
     gradient_accumulation_steps=8,

@@ -9,9 +9,7 @@ from peft import PeftModel
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# ============================
-# 1. Load JSONL base codes
-# ============================
+
 def load_jsonl(path):
     data = []
     with open(path, "r", encoding="utf-8") as f:
@@ -20,9 +18,6 @@ def load_jsonl(path):
     return data
 
 
-# ============================
-# 2. Embedding model (for retrieval)
-# ============================
 def build_index(jsonl_path):
     base_codes = load_jsonl(jsonl_path)
     embed_model = SentenceTransformer("BAAI/bge-small-en-v1.5")
@@ -68,9 +63,6 @@ def build_context(query, embed_model, index, base_codes, k=3):
     return "\n---\n".join(context)
 
 
-# ============================
-# 3. Finetuned LLM
-# ============================
 def load_finetuned_model(base_model_path: str, fine_tuned_model_path: str):
     tokenizer = AutoTokenizer.from_pretrained(base_model_path)
     if tokenizer.pad_token is None:
@@ -117,10 +109,6 @@ def generate_response(model, tokenizer, prompt, max_new_tokens=4096):
 
     return response
 
-
-# ============================
-# 4. Prompt builder
-# ============================
 def build_prompt(query, context_block):
     return f"""You are a Blender scripting assistant.
 
@@ -134,23 +122,29 @@ Generate ONLY valid Blender Python code.
 """
 
 
-# ============================
-# 5. Code extraction (optional)
-# ============================
 def extract_code(text):
     match = re.search(r"```python(.*?)```", text, re.DOTALL)
     return match.group(1).strip() if match else text.strip()
 
 
-# ============================
-# 6. Main script
-# ============================
+
+import argparse
+import os
+import pandas as pd
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--models",
+        required=True,
+        help="Path to the fine-tuned model checkpoint"
+    )
+    args = parser.parse_args()
+
     # ---- Paths ----
     jsonl_path = "biodataset_baserag.jsonl"
-    csv_path = "benchmark.csv"  # CSV with columns: prompt, filename
-    output_folder = "llm_wrag_10-8_stress"
-
+    csv_path = "benchmark.csv"
+    output_folder = "./eval_results_wRAG/"
     os.makedirs(output_folder, exist_ok=True)
 
     # ---- Load retriever ----
@@ -158,8 +152,12 @@ if __name__ == "__main__":
 
     # ---- Load finetuned model ----
     base_model_path = "meta-llama/Llama-3.2-3B-Instruct"
-    fine_tuned_model_path = "./llama_finetuned_blender_9-22/checkpoint-500"
-    llm_model, llm_tokenizer = load_finetuned_model(base_model_path, fine_tuned_model_path)
+    fine_tuned_model_path = args.finetuned_model_path
+
+    llm_model, llm_tokenizer = load_finetuned_model(
+        base_model_path,
+        fine_tuned_model_path
+    )
 
     # ---- Load prompts ----
     df = pd.read_csv(csv_path)
@@ -172,14 +170,15 @@ if __name__ == "__main__":
         print(f"\n🚀 Running query: {query}")
 
         try:
-            # Retrieve + build context
-            context_block = build_context(query, embed_model, index, base_codes, k=2)
+            context_block = build_context(
+                query, embed_model, index, base_codes, k=2
+            )
             prompt = build_prompt(query, context_block)
 
-            # Generate response
-            raw_response = generate_response(llm_model, llm_tokenizer, prompt)
+            raw_response = generate_response(
+                llm_model, llm_tokenizer, prompt
+            )
 
-            # Save raw response
             output_path = os.path.join(output_folder, f"{filename}.txt")
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(raw_response)
@@ -188,3 +187,4 @@ if __name__ == "__main__":
 
         except Exception as e:
             print(f"❌ Error processing {filename}: {e}")
+
