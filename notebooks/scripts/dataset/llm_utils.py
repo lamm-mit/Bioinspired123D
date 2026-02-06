@@ -1,5 +1,8 @@
+from __future__ import annotations
 import re
 import json
+import os
+from typing import Iterable, Set
 
 def query_llm(prompt: str, client, model, temperature: float = 0.1) -> str:
     completion = client.chat.completions.create(
@@ -36,3 +39,22 @@ def load_variants_from_jsonl(filepath):
             }
             variants.append(variant)
     return variants
+
+
+def get_keep_ids_from_folder(folder: str, ext: str = ".png") -> Set[str]:
+    return {
+        os.path.splitext(f)[0]
+        for f in os.listdir(folder)
+        if f.endswith(ext)
+    }
+
+
+def filter_jsonl_by_ids(input_jsonl: str, output_jsonl: str, keep_ids: Set[str], id_key: str = "id") -> int:
+    kept = 0
+    with open(input_jsonl, "r", encoding="utf-8") as infile, open(output_jsonl, "w", encoding="utf-8") as outfile:
+        for line in infile:
+            entry = json.loads(line)
+            if entry.get(id_key) in keep_ids:
+                outfile.write(json.dumps(entry) + "\n")
+                kept += 1
+    return kept

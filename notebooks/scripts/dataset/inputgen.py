@@ -1,3 +1,4 @@
+from __future__ import annotations
 import random
 
 # === WORD BANKS ===
@@ -239,3 +240,121 @@ def get_shape_phrase(base_id):
         return generate_tub_phrase(base_id)
     else:
         raise ValueError(f"Unrecognized base_id: {base_id}")
+    
+
+
+import csv
+import json
+import random
+import re
+from pathlib import Path
+from typing import Literal, Optional
+
+from scripts.inputgen import get_shape_phrase, generate_input
+
+
+_STEP_PHRASES = [
+    " Think step by step.",
+    " think step by step.",
+    " think step by step",
+    " Think step by step",
+]
+
+
+def strip_code_fences(code: str) -> str:
+    """
+    Remove surrounding ``` or ```python fences if present.
+    Keeps inner code untouched.
+    """
+    if not code:
+        return code
+
+    code = code.strip()
+
+    # ```python ... ```
+    m = re.match(r"^```(?:python)?\s*\n(.*)\n```$", code, flags=re.DOTALL | re.IGNORECASE)
+    if m:
+        return m.group(1).strip()
+
+    # fallback: if it starts with ``` just remove leading/trailing fences naïvely
+    if code.startswith("```"):
+        code = code.strip("`").strip()
+        if code.lower().startswith("python"):
+            code = code[len("python"):].strip()
+        return code
+
+    return code
+
+
+def jsonl_to_prompt_csv(
+    *,
+    jsonl_path: str,
+    csv_output_path: str,
+    mode: Literal["diverse", "reason", "general"] = "diverse",
+    seed: Optional[int] = None,
+) -> int:
+    """
+    Convert a QC'd JSONL into a CSV with columns [prompt, answer].
+
+    Modes:
+      - diverse: prompt = generate_input(get_shape_phrase(base_id))
+      - reason:  same as diverse + random step-by-step suffix
+      - general:     prompt = item["core_prompt"], code = item["code"] with fence stripping
+
+    Returns number of rows written.
+    """
+    if seed is not None:
+        random.seed(seed)
+
+    in_path = Path(jsonl_path)
+    out_path = Path(csv_output_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    rows_written = 0
+
+    with open(in_path, "r", encoding="utf-8") as f_in, open(out_path, "w", encoding="utf-8", newline="") as f_out:
+        writer = csv.DictWriter(f_out, fieldnames=["prompt", "answer"])
+        writer.writeheader()
+
+        for line_num, line in enumerate(f_in, start=1):
+            line = line.strip()
+            if not line:
+                continue
+
+            try:
+                item = json.loads(line)
+            except Exception:
+                continue
+
+            try:
+                if mode in ("diverse", "reason"):
+                    base_id = (item.get("base_id") or "").strip()
+                    code = (item.get("code") or "").strip()
+                    if not base_id or not code:
+                        continue
+
+                    shape = get_shape_phrase(base_id)
+                    prompt = generate_input(shape)
+                    if mode == "reason":
+                        prompt = prompt + random.choice(_STEP_PHRASES)
+
+                    writer.writerow({"prompt": prompt, "answer": code})
+                    rows_written += 1
+
+                elif mode == "general":
+                    prompt = (item.get("core_prompt") or "").strip()
+                    code = strip_code_fences((item.get("code") or "").strip())
+                    if not prompt or not code:
+                        continue
+
+                    writer.writerow({"prompt": prompt, "answer": code})
+                    rows_written += 1
+
+                else:
+                    raise ValueError(f"Unknown mode: {mode}")
+
+            except Exception as e:
+                # keep going, but make debugging possible
+                print(f"Skipping line {line_num}: {e}")
+
+    return rows_written
