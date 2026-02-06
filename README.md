@@ -8,9 +8,9 @@
 
 ## Overview
 
-**Bioinspired123D** is a generative framework that translates natural language descriptions of biological structure into executable **Blender Python scripts**, producing procedural 3D bioinspired geometries.
+**Bioinspired123D** is a generative agentic framework that translates natural language descriptions of biological structure into executable **Blender Python scripts**, producing 3D bioinspired geometries.
 
-The system explores how lightweight, fine tuned LLMs can move beyond 1D text generation to structured **3D model synthesis**, enabling exploration of tubular, helical, cellular, and hybrid architectures inspired by biological materials.
+The system explores how lightweight, finetuned LLMs extend beyond 1D text generation to structured **3D model synthesis**, enabling exploration of tubular, helical, cellular, and hybrid architectures inspired by biological materials.
 
 Core ideas:
 - Language → executable geometry  
@@ -20,14 +20,20 @@ Core ideas:
 - Compact models designed for limited compute settings  
 
 ---
-
 <p align="center">
-  <video src="media/cellular.mp4" width="30%" autoplay loop muted playsinline></video>
-  <video src="media/tubular.mp4" width="30%" autoplay loop muted playsinline></video>
-  <video src="media/helical.mp4" width="30%" autoplay loop muted playsinline></video>
+  <a href="media/cellular.mp4">
+    <img src="media/cellular_preview.png" width="30%">
+  </a>
+  <a href="media/tubular.mp4">
+    <img src="media/tubular_preview.png" width="30%">
+  </a>
+  <a href="media/helical.mp4">
+    <img src="media/helical_preview.png" width="30%">
+  </a>
 </p>
-
 ---
+
+![Alt Text](media/bioinspired123d_overview.png)
 
 ## Repository Structure
 
@@ -76,6 +82,8 @@ https://extensions.blender.org/add-ons/cell-fracture/
 ### 00_dataset_pipeline.ipynb
 Generates a Blender code dataset from natural language prompts using diversification and embedded reasoning.
 
+![Alt Text](media/dataset_pipeline.png)
+
 ### 01_inf_Bioinspired3D.ipynb
 Runs inference with **Bioinspired3D**, the fine tuned LLM that generates Blender Python scripts directly from prompts.
 
@@ -94,7 +102,7 @@ python training/finetune_bio3d.py
 
 
 ## Evaluation
-We also release evaluation scripts for benchmarking **Bioinspired3D** and **Bioinspired123D**.  
+We also release evaluation scripts for benchmarking **Bioinspired3D**.
 A Hugging Face token is required.
 ```bash
 python eval/benchmark_eval.py --models <path_to_model_checkpoints>
