@@ -22,9 +22,9 @@ Core ideas:
 ---
 
 <p align="center">
-  <img src="media/cellular.gif" width="30%">
-  <img src="media/tubular.gif" width="30%">
-  <img src="media/helical.gif" width="30%">
+  <video src="media/cellular.mp4" width="30%" autoplay loop muted playsinline></video>
+  <video src="media/tubular.mp4" width="30%" autoplay loop muted playsinline></video>
+  <video src="media/helical.mp4" width="30%" autoplay loop muted playsinline></video>
 </p>
 
 ---
