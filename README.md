@@ -14,7 +14,7 @@ The system explores how lightweight, finetuned LLMs extend beyond 1D text genera
 
 Core ideas:
 - Language → executable geometry  
-- Procedural 3D generation via Blender scripting  
+- Procedural 3D generation via Python scripting  
 - Multimodal grounding using rendered images and code validation  
 - Agentic and staged inference for robustness and repair  
 - Compact models designed for limited compute settings  
@@ -119,8 +119,11 @@ If you use this work, please cite:
 ```bibtex
 @article{luu2026bioinspired123d,
   title={Bioinspired123D: Generative 3D Modeling System for Bioinspired Structures},
-  author={Luu, Rachel K. and  Buehler, Markus J.},
-  year={2026}
+  author={Luu, Rachel K. and Buehler, Markus J.},
+  journal={AI for Science},
+  year={2026},
+  doi={10.1088/3050-287X/ae61d1},
+  url={https://iopscience.iop.org/article/10.1088/3050-287X/ae61d1}
 }
 ```
 
